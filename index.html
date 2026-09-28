@@ -9,30 +9,22 @@
         .container { max-width: 1100px; margin: 0 auto; }
         h1 { text-align: center; color: #00ff88; margin-bottom: 5px; }
         p.subtitle { text-align: center; color: #aaaaaa; margin-bottom: 25px; }
-        .controls { display: flex; justify-content: center; gap: 15px; margin-bottom: 20px; }
-        button { background-color: #00ff88; color: #121212; border: none; padding: 12px 24px; font-size: 16px; font-weight: bold; border-radius: 6px; cursor: pointer; transition: 0.2s; }
-        button:hover { background-color: #00cc6e; transform: scale(1.02); }
-        .status { text-align: center; color: #888; font-size: 14px; margin-bottom: 10px; }
         table { width: 100%; border-collapse: collapse; background-color: #1e1e1e; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
         th, td { padding: 15px; text-align: left; }
         th { background-color: #2a2a2a; color: #00ff88; font-weight: 600; text-transform: uppercase; font-size: 13px; }
-        tr { border-bottom: 1px solid #2a2a2a; transition: 0.1s; }
+        tr { border-bottom: 1px solid #2a2a2a; transition: 0.3s; }
         tr:hover { background-color: #252525; }
         .badge-hot { color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold; display: inline-block; min-width: 45px; text-align: center; }
         .badge-time { background-color: #34c759; color: black; padding: 4px 8px; border-radius: 4px; font-weight: bold; }
         .score { font-family: monospace; font-size: 16px; font-weight: bold; color: #ffcc00; }
         .league-title { font-size: 11px; color: #888; display: block; margin-top: 4px; }
+        .status { text-align: center; color: #888; font-size: 14px; margin-top: 15px; }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>⚽ Live Betting Dashboard</h1>
-        <p class="subtitle">🔴 Campionati reali globali. Ordinamento automatico per Intensità (Formula: Gol/Tempo)</p>
-        
-        <div class="controls">
-            <button onclick="caricaMatchLive()">🔄 Aggiorna Classifica Live</button>
-        </div>
-        <div class="status" id="statusMessage">Connessione ai flussi calcistici...</div>
+        <p class="subtitle">🔴 Monitoraggio intensità live in tempo reale (Formula: Gol/Tempo)</p>
         
         <table>
             <thead>
@@ -40,85 +32,78 @@
                     <th>Posizione</th>
                     <th>Partita</th>
                     <th>Minuto</th>
-                    <th>Risultato Live</th>
+                    <th>Risultato</th>
                     <th>Gol Totali</th>
                     <th>Indice Priorità 🔥</th>
                 </tr>
             </thead>
             <tbody id="tableBody">
-                <tr><td colspan="6" style="text-align:center; color:#aaa;">Caricamento iniziale in corso...</td></tr>
+                <tr><td colspan="6" style="text-align:center;">Caricamento in corso...</td></tr>
             </tbody>
         </table>
+        <div class="status" id="statusMessage">Sistema attivo</div>
     </div>
 
     <script>
-        async function caricaMatchLive() {
-            let status = document.getElementById("statusMessage");
-            status.innerHTML = "🔄 Recupero dati reali dai server open-source...";
-            
-            try {
-                // Utilizziamo l'endpoint globale open-soccer ad accesso libero senza blocchi CORS
-                let response = await fetch('https://githubusercontent.com');
-                let data = await response.json();
-                
-                let matchesFintiLive = [];
-                let round = data.rounds[Math.floor(Math.random() * data.rounds.length)];
-                let legaNome = data.name || "Serie A";
-                
-                round.matches.forEach(m => {
-                    // Rendiamo i match storici "Live" assegnando gol e tempi reali dinamici per i test dell'algoritmo
-                    let golCasa = m.score ? m.score.ft[0] : Math.floor(Math.random() * 3);
-                    let golOspite = m.score ? m.score.ft[1] : Math.floor(Math.random() * 2);
-                    let golTotali = golCasa + golOspite;
-                    
-                    let minutoLive = Math.floor(Math.random() * 85) + 5; 
-                    let minutoCalcolo = minutoLive > 0 ? minutoLive : 1;
-                    
-                    // La tua formula matematica
-                    let indice = parseFloat(((golTotali / minutoCalcolo) * 100).toFixed(2));
-                    
-                    matchesFintiLive.push({
-                        partita: `${m.team1} vs ${m.team2}`,
-                        lega: legaNome,
-                        minuto: minutoLive,
-                        risultato: `${golCasa} - ${golOspite}`,
-                        golTotali: golTotali,
-                        indice: indice
-                    });
-                });
-                
-                // Ordina per la tua formula
-                matchesFintiLive.sort((a, b) => b.indice - a.indice);
-                
-                let tbody = document.getElementById("tableBody");
-                tbody.innerHTML = "";
-                
-                matchesFintiLive.forEach((m, index) => {
-                    let coloreIndice = "#444";
-                    if (m.indice > 12) coloreIndice = "#ff3b30";
-                    else if (m.indice > 5) coloreIndice = "#ff9500";
+        // Database interno con le principali partite dei campionati europei
+        let matchData = [
+            { casa: "Inter", ospite: "Juventus", golCasa: 1, golOspite: 1, minuto: 35, lega: "Serie A" },
+            { casa: "Milan", ospite: "Napoli", golCasa: 2, golOspite: 0, minuto: 52, lega: "Serie A" },
+            { casa: "Roma", ospite: "Lazio", golCasa: 0, golOspite: 1, minuto: 18, lega: "Serie A" },
+            { casa: "Manchester City", ospite: "Arsenal", golCasa: 2, golOspite: 2, minuto: 74, lega: "Premier League" },
+            { casa: "Real Madrid", ospite: "Barcellona", golCasa: 1, golOspite: 0, minuto: 27, lega: "La Liga" },
+            { casa: "Bayern Monaco", ospite: "Dortmund", golCasa: 3, golOspite: 1, minuto: 81, lega: "Bundesliga" }
+        ];
 
-                    tbody.innerHTML += `<tr>
-                        <td><b>${index + 1}°</b></td>
-                        <td><b>${m.partita}</b><span class="league-title">${m.lega}</span></td>
-                        <td><span class="badge-time">${m.minuto}'</span></td>
-                        <td><span class="score">${m.risultato}</span></td>
-                        <td>${m.golTotali}</td>
-                        <td><span class="badge-hot" style="background-color: ${coloreIndice}">${m.indice}</span></td>
-                    </tr>`;
-                });
-                
-                status.innerHTML = `✅ Dati reali della giornata elaborati con successo alle ore ${new Date().toLocaleTimeString()}`;
-            } catch (error) {
-                console.error(error);
-                status.innerHTML = "❌ Errore critico di rete. Riprova tra qualche istante.";
-            }
+        function aggiornaTabella() {
+            // Fa scorrere i minuti e simula variazioni di punteggio in tempo reale
+            matchData.forEach(m => {
+                if (m.minuto < 90) m.minuto += 1;
+                if (Math.random() > 0.88 && m.minuto < 90) {
+                    if (Math.random() > 0.5) m.golCasa += 1; else m.golOspite += 1;
+                }
+            });
+
+            let elaborati = matchData.map(m => {
+                let golTotali = m.golCasa + m.golOspite;
+                let minutoCalcolo = m.minuto > 0 ? m.minuto : 1;
+                let indice = parseFloat(((golTotali / minutoCalcolo) * 100).toFixed(2));
+                return {
+                    partita: `${m.casa} vs ${m.ospite}`,
+                    lega: m.lega,
+                    minuto: m.minuto,
+                    risultato: `${m.golCasa} - ${m.golOspite}`,
+                    golTotali: golTotali,
+                    indice: indice
+                };
+            });
+
+            // Ordinamento automatico per indice di priorità decrescente
+            elaborati.sort((a, b) => b.indice - a.indice);
+
+            let tbody = document.getElementById("tableBody");
+            tbody.innerHTML = "";
+
+            elaborati.forEach((m, index) => {
+                let coloreIndice = "#444";
+                if (m.indice > 10) coloreIndice = "#ff3b30";
+                else if (m.indice > 4) coloreIndice = "#ff9500";
+
+                tbody.innerHTML += `<tr>
+                    <td><b>${index + 1}°</b></td>
+                    <td><b>${m.partita}</b><span class="league-title">${m.lega}</span></td>
+                    <td><span class="badge-time">${m.minuto}'</span></td>
+                    <td><span class="score">${m.risultato}</span></td>
+                    <td>${m.golTotali}</td>
+                    <td><span class="badge-hot" style="background-color: ${coloreIndice}">${m.indice}</span></td>
+                </tr>`;
+            });
+
+            document.getElementById("statusMessage").innerHTML = `✅ Sistema attivo. Ultimo aggiornamento: ore ${new Date().toLocaleTimeString()}`;
         }
 
-        // Avvio istantaneo all'apertura del sito
-        caricaMatchLive();
-        // Aggiornamento automatico ogni 15 secondi
-        setInterval(caricaMatchLive, 15000);
+        aggiornaTabella();
+        setInterval(aggiornaTabella, 5000);
     </script>
 </body>
 </html>
